@@ -1,92 +1,89 @@
 #include <stdio.h>
 
-#define N 4
+#define N 2000 
 #define SIZE 7 
 #define _DEBUG 1
 #define MAXINT 0x7FFFFFFF
+#define min(x,y) (((x) > (y)) ? (y) : (x))
 
 typedef int T;
-typedef struct edge{
-	int x;
-	int y;
-	int dis;
-} Edge;
-
-Edge edge[(N*N-N)/2];
 char point[N][10];
 int dis[N];
 long total_dis = 0;
-
-// qsort 
-void swap(Edge *v, int a, int b)
-{
-	Edge temp = v[a];
-	v[a] = v[b];
-	v[b] = temp;
-}
-void qsort(Edge *v, int left, int right)
-{
-	if (left >= right) return;
-
-	swap(v, left, (left+right)/2);
-	int i, last = 0;
-	for (i = left+1; i <= right; ++i) 
-		if (v[i].dis < v[left].dis)
-			swap(v, i, ++last);
-	swap(v, last, left);
-
-	qsort(v, left, last-1);
-	qsort(v, last+1, right);
-}
 
 // basic opreation
 T get_dis(char a[], char b[], int n)
 {
 	T total = 0;
 	while(--n >= 0) {
-		total += (a[n] == b[n] ? 0 : 1);
+		total += (a[n] != b[n]);
 	}
 	return total;
 }
 
-// read data and init the variable
+/*
+ * read data and init the variable
+ */
 void read_data(int n)
 {
-	int i, j;
+	int i;
 	for (i = 0; i < n; ++i) {
 		scanf("%s", point[i]);
-	}
-
-	int k = 0;
-	for (i = 0; i < n; ++i) {
-		for (j = i+1; j < n; ++j) {
-			++k;
-			edge[k].x = i;
-			edge[k].y = j;
-			edge[k].dis = get_dis(point[i], point[j], SIZE);
-#if _DEBUG
-			printf("(%s, %s) = %d\n", point[i], point[j], edge[k].dis);
-#endif
-		}
-	}
-
-	qsort(edge, 0, n-1);
-
-	for (i = 0; i < n; ++i) {
 		dis[i] = MAXINT;
 	}
+	total_dis = 0;
 }
 
-void prim_tree()
+/*
+ * prim algrithm
+ */
+void prim_tree(int n)
 {
-		
+	int i, j;
+
+	// select the 1st point
+	int now_point = 0;
+	dis[now_point] = 0;
+
+	// select the next n-1 points
+	for (i = 1; i < n; ++i){
+		// update the vector distance
+		for (j = 0; j < n; ++j) {
+			if (dis[j]) { 
+				int j_now_dis = get_dis(point[j], point[now_point], SIZE);
+#if _DEBUG
+				printf("The distance of (%s, %s) is %d\n", point[i], point[now_point], j_now_dis);
+#endif
+				dis[j] = min(dis[j], j_now_dis);
+			}
+		}
+
+		// select the min distance
+		int min_dis = MAXINT;
+		for (j = 0; j < n; ++j) {
+			if (dis[j] && dis[j] < min_dis) {
+				min_dis = dis[j];
+				now_point = j;
+			}
+		}
+#if _DEBUG
+		printf("The min_dis is %d\n", min_dis);
+#endif
+
+		// add it BTW
+		total_dis += min_dis;
+		dis[now_point] = 0;
+	}
+
+	printf("The highest possible quality is 1/%d.\n", total_dis);
 }
 
 int main()
 {
 	int i, j, n;
-	while (scanf("%d\n", &n) == 1  && n) {
+	while (scanf("%d\n", &n) == 1  && n != 0) {
 		read_data(n);
+		prim_tree(n);
 	}
 
 	return 0;
